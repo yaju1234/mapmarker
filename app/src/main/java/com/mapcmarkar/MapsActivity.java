@@ -179,7 +179,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 LatLng latLng = Utils.getLatLong(s);
                 if(latLng == null){
                     if (!isShowFirstTime) {
-                        Toast.makeText(MapsActivity.this, "Unable to get the location", Toast.LENGTH_LONG).show();
+                        //Toast.makeText(MapsActivity.this, "Unable to get the location", Toast.LENGTH_LONG).show();
                         isShowFirstTime=true;
                     }
 
@@ -205,7 +205,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             }else {
                 if (!isShowFirstTime) {
-                    Toast.makeText(MapsActivity.this, "Unable to get the location", Toast.LENGTH_LONG).show();
+
+                    //Toast.makeText(MapsActivity.this, "Unable to get the location", Toast.LENGTH_LONG).show();
                     isShowFirstTime=true;
                 }
             }
