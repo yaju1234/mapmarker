@@ -44,6 +44,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import okhttp3.ResponseBody;
@@ -57,27 +59,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private MarkerManager<ColorMarker> colorMarkerManager;
     private ProgressDialog progressDialog;
     private CameraUpdate cameraPosition;
-    private int color[]={};
-    private Random randColor;
     private boolean isShowFirstTime=false;
     private CoordinatorLayout coordinator;
     private ArrayList<InvalidAddress> invalidAddressList=new ArrayList<>();
+    private Map<String ,Integer> colorMap=new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-         color= new int[]{getResources().getColor(R.color.color1),
-                 getResources().getColor(R.color.color2),
-                 getResources().getColor(R.color.color3),
-                 getResources().getColor(R.color.color4),
-                 getResources().getColor(R.color.color5),
-                 getResources().getColor(R.color.color6),
-                 getResources().getColor(R.color.color7),
-                 getResources().getColor(R.color.color8),
-                 getResources().getColor(R.color.color9),
-                 getResources().getColor(R.color.color10)};
-        randColor = new Random();
         coordinator=(CoordinatorLayout)findViewById(R.id.coordinator);
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -147,7 +137,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                    model.setSubGrup(actor.getInt("SubGrup"));*/
                                     //addressList.add(model);
 
-                                    new GetLatLongTask().execute(actor.getString("item3"), actor.getString("item1"));
+                                    new GetLatLongTask().execute(actor.getString("item3"), actor.getString("item1"),actor.getString("item4"));
                                 }
 
                             }
@@ -173,10 +163,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private class GetLatLongTask extends AsyncTask<String, JSONObject, JSONObject> {
        String clientName=null;
+       String sellerName=null;
         protected JSONObject doInBackground(String... urls) {
             clientName=urls[1];
-            JSONObject jsonObject = getLocationInfo(urls[0],clientName);
-
+            sellerName=urls[2];
+            JSONObject jsonObject = getLocationInfo(urls[0],sellerName);
             return jsonObject;
         }
 
@@ -194,9 +185,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     return;
                 }
-
                 IconGenerator iconFactory = new IconGenerator(MapsActivity.this);
-                iconFactory.setColor(color[randColor.nextInt(10)]);
+
+                if (colorMap.containsKey(sellerName)){
+                    iconFactory.setColor(colorMap.get(sellerName));
+                }else {
+                    colorMap.put(sellerName,Utils.randomColor());
+                    iconFactory.setColor(Utils.randomColor());
+                }
 
                 addIcon(iconFactory, clientName, latLng);
 
@@ -250,6 +246,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (status.equalsIgnoreCase("ZERO_RESULTS")){
                 InvalidAddress invalidAddress=new InvalidAddress(address,sellerName);
                 invalidAddressList.add(invalidAddress);
+                showSnackbar(invalidAddressList,sellerName);
                 return null;
             }
 
@@ -276,18 +273,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return false;
         }
     }
-    public void showSnackbar(){
+    public void showSnackbar(ArrayList<InvalidAddress> invalidAddressList, String sellerName){
         Snackbar snackbar = Snackbar
-                .make(coordinator, "Unable to fetch location", Snackbar.LENGTH_INDEFINITE)
-                .setAction("VIEW", new View.OnClickListener() {
+                .make(coordinator, "Unable to find location for seller  "+sellerName, Snackbar.LENGTH_INDEFINITE)
+                .setAction("VIEW ALL", new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                     }
                 });
-        snackbar.setActionTextColor(Color.RED);
+        snackbar.setActionTextColor(Color.WHITE);
         View sbView = snackbar.getView();
         TextView textView = (TextView) sbView.findViewById(android.support.design.R.id.snackbar_text);
         textView.setTextColor(Color.YELLOW);
         snackbar.show();
     }
+
 }
