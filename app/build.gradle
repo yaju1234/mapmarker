@@ -36,4 +36,7 @@ dependencies {
     //noinspection DuplicatePlatformClasses
     compile 'org.apache.httpcomponents:httpclient:4.0-beta1'
     compile 'com.google.maps.android:android-maps-utils:0.5+'
+    compile 'com.android.support:design:26.1.0'
+
+
 }

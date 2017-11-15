@@ -2,11 +2,16 @@ package com.mapcmarkar;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -18,6 +23,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.ui.IconGenerator;
+import com.mapcmarkar.model.InvalidAddress;
 import com.mapcmarkar.restservice.APIHelper;
 import com.mapcmarkar.restservice.RestService;
 import com.mapcmarkar.utility.Utils;
@@ -37,6 +43,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Random;
 
 import okhttp3.ResponseBody;
@@ -53,6 +60,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private int color[]={};
     private Random randColor;
     private boolean isShowFirstTime=false;
+    private CoordinatorLayout coordinator;
+    private ArrayList<InvalidAddress> invalidAddressList=new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +78,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                  getResources().getColor(R.color.color9),
                  getResources().getColor(R.color.color10)};
         randColor = new Random();
+        coordinator=(CoordinatorLayout)findViewById(R.id.coordinator);
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -164,8 +174,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private class GetLatLongTask extends AsyncTask<String, JSONObject, JSONObject> {
        String clientName=null;
         protected JSONObject doInBackground(String... urls) {
-            JSONObject jsonObject = getLocationInfo(urls[0]);
-             clientName=urls[1];
+            clientName=urls[1];
+            JSONObject jsonObject = getLocationInfo(urls[0],clientName);
+
             return jsonObject;
         }
 
@@ -208,7 +219,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-    public JSONObject getLocationInfo(String address) {
+    public JSONObject getLocationInfo(String address,String sellerName) {
         StringBuilder stringBuilder = new StringBuilder();
         try {
             address = address.replaceAll(" ", "%20");
@@ -235,6 +246,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         JSONObject jsonObject = null;
         try {
             jsonObject = new JSONObject(stringBuilder.toString());
+            String status=jsonObject.getString("status");
+            if (status.equalsIgnoreCase("ZERO_RESULTS")){
+                InvalidAddress invalidAddress=new InvalidAddress(address,sellerName);
+                invalidAddressList.add(invalidAddress);
+                return null;
+            }
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -257,5 +275,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } else {
             return false;
         }
+    }
+    public void showSnackbar(){
+        Snackbar snackbar = Snackbar
+                .make(coordinator, "Unable to fetch location", Snackbar.LENGTH_INDEFINITE)
+                .setAction("VIEW", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                    }
+                });
+        snackbar.setActionTextColor(Color.RED);
+        View sbView = snackbar.getView();
+        TextView textView = (TextView) sbView.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setTextColor(Color.YELLOW);
+        snackbar.show();
     }
 }
